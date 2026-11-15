@@ -80,9 +80,12 @@
     var c = (p.category || '').toLowerCase();
     var name = p.name;
     if (c.indexOf('lend') >= 0 || c.indexOf('cdp') >= 0 || c.indexOf('collateral') >= 0) return 'Supply $' + capital + ' of USDC to ' + name + ' on ' + chain + ' and leave it earning.';
+    // Indexes before Dexs: "indexes" contains "dex", and an index is bought, not pooled.
+    if (c.indexOf('indexes') >= 0) return 'Buy $' + capital + ' of the ' + name + ' index on ' + chain + ' and hold it.';
     if (c.indexOf('dex') >= 0) return 'Add $' + capital + ' of liquidity to the busiest ' + name + ' pool on ' + chain + ' and keep it in range.';
-    if (c.indexOf('yield aggregator') >= 0 || c.indexOf('yield') >= 0) return 'Deposit $' + capital + ' into the highest-TVL ' + name + ' vault on ' + chain + ' and hold the receipt.';
+    if (c.indexOf('yield aggregator') >= 0 || c.indexOf('yield') >= 0 || c === 'farm') return 'Deposit $' + capital + ' into the highest-TVL ' + name + ' vault on ' + chain + ' and hold the receipt.';
     if (c.indexOf('leveraged farm') >= 0) return 'Open a $' + capital + ' leveraged position on ' + name + ' and keep the health factor above 1.5.';
+    if (c.indexOf('liquidity manager') >= 0) return 'Deposit $' + capital + ' into a ' + name + '-managed pool on ' + chain + ' and let it rebalance.';
     if (c.indexOf('bridge') >= 0) return 'Bridge $' + capital + ' of USDC to ' + chain + ' through ' + name + ' and use the funds inside its app.';
     if (c.indexOf('liquid staking') >= 0 || c.indexOf('restak') >= 0 || c.indexOf('staking') >= 0) return "Stake $" + capital + " of the chain's staking asset through " + name + ' and hold the receipt token.';
     if (c.indexOf('perpetual') >= 0 || c.indexOf('derivative') >= 0) return 'Deposit $' + capital + ' of USDC as margin on ' + name + ' and open one small hedged position.';
@@ -92,6 +95,11 @@
     if (c.indexOf('rwa') >= 0) return "Mint $" + capital + " of the protocol's yield-bearing asset on " + chain + ' and hold it.';
     if (c.indexOf('insurance') >= 0) return 'Buy $' + capital + ' of cover from ' + name + ' on ' + chain + ' and keep the policy active.';
     if (c.indexOf('basis') >= 0) return 'Deposit $' + capital + ' into the ' + name + ' basis strategy on ' + chain + ' and hold the position.';
+    if (c.indexOf('btc') >= 0) return 'Mint $' + capital + ' of the BTC-backed asset through ' + name + ' on ' + chain + ' and hold it.';
+    if (c.indexOf('payments') >= 0) return 'Send $' + capital + ' through ' + name + ' on ' + chain + ' and keep the channel open.';
+    if (c.indexOf('governance') >= 0) return 'Deposit $' + capital + ' into a ' + name + ' incentives pool on ' + chain + '.';
+    if (c.indexOf('card') >= 0) return 'Load $' + capital + ' onto a ' + name + ' card on ' + chain + ' and use it for one purchase.';
+    if (c === 'chain') return 'Bridge $' + capital + ' of USDC to ' + name + ' and use it inside its own apps.';
     return 'Deposit $' + capital + ' of USDC into ' + name + ' on ' + chain + ' and keep the position open.';
   }
   function secondActionFor(p, capital, chain) {
@@ -99,8 +107,10 @@
     var name = p.name;
     var small = Math.max(10, Math.round(capital / 5));
     if (c.indexOf('lend') >= 0 || c.indexOf('cdp') >= 0 || c.indexOf('collateral') >= 0) return 'Borrow about a third of what you supplied from ' + name + ', then repay half of it the following week.';
+    if (c.indexOf('indexes') >= 0) return 'Add $' + small + ' to the index position when it rebalances.';
     if (c.indexOf('dex') >= 0) return 'Swap $' + small + ' through ' + name + ' on ' + chain + ' once a week instead of holding still.';
-    if (c.indexOf('yield') >= 0) return 'Move a quarter of the vault position into a second ' + name + ' vault on another chain it supports.';
+    if (c.indexOf('yield') >= 0 || c === 'farm') return 'Move a quarter of the vault position into a second ' + name + ' vault on another chain it supports.';
+    if (c.indexOf('liquidity manager') >= 0) return 'Move $' + small + ' into a second ' + name + '-managed pool on another chain it supports.';
     if (c.indexOf('bridge') >= 0) return 'Bridge $' + small + ' back through ' + name + ' so both directions are on record.';
     if (c.indexOf('liquid staking') >= 0 || c.indexOf('restak') >= 0 || c.indexOf('staking') >= 0) return "Deposit the staking receipt into " + name + "'s own yield option, or restake the rewards it pays.";
     if (c.indexOf('perpetual') >= 0 || c.indexOf('derivative') >= 0) return 'Close and reopen the hedge once so the position shows fresh activity.';
@@ -110,6 +120,11 @@
     if (c.indexOf('rwa') >= 0) return 'Claim the yield the asset pays and re-mint with it, keeping one receipt.';
     if (c.indexOf('insurance') >= 0) return 'Renew or extend the cover by one period before the first one lapses.';
     if (c.indexOf('basis') >= 0) return 'Check the funding rate weekly and add $' + small + ' when it turns positive.';
+    if (c.indexOf('btc') >= 0) return 'Claim the yield the BTC-backed asset pays and re-mint with it, keeping one receipt.';
+    if (c.indexOf('payments') >= 0) return 'Send a second, smaller payment through ' + name + ' the following week.';
+    if (c.indexOf('governance') >= 0) return 'Vote with the position once, then add $' + small + ' to the incentives pool.';
+    if (c.indexOf('card') >= 0) return 'Make a second purchase with the card the following week.';
+    if (c === 'chain') return 'Use a second app on ' + name + ' with $' + small + '.';
     return 'Return to ' + name + ' once a week and repeat the deposit with $' + small + ' more.';
   }
   function stepText(step) {
@@ -123,9 +138,11 @@
   function riskFor(p) {
     var c = (p.category || '').toLowerCase();
     if (c.indexOf('lend') >= 0 || c.indexOf('cdp') >= 0 || c.indexOf('collateral') >= 0) return 'a supplied asset can be liquidated if the collateral behind it falls';
+    if (c.indexOf('indexes') >= 0) return 'an index falls with every asset it holds';
     if (c.indexOf('dex') >= 0) return 'a liquidity position loses value when the two sides move apart';
-    if (c.indexOf('yield') >= 0) return 'yields compress as more capital chases the same strategy';
+    if (c.indexOf('yield') >= 0 || c === 'farm') return 'yields compress as more capital chases the same strategy';
     if (c.indexOf('leveraged farm') >= 0) return 'leverage multiplies losses as fast as gains, and the position can be liquidated';
+    if (c.indexOf('liquidity manager') >= 0) return 'a managed position still loses value when its assets move apart';
     if (c.indexOf('bridge') >= 0) return 'bridged funds depend on the bridge staying solvent and unhacked';
     if (c.indexOf('liquid staking') >= 0 || c.indexOf('restak') >= 0 || c.indexOf('staking') >= 0) return 'the staking receipt can trade below the staked asset while exits queue';
     if (c.indexOf('perpetual') >= 0 || c.indexOf('derivative') >= 0) return 'a leveraged position can be liquidated by one sharp move';
@@ -135,29 +152,44 @@
     if (c.indexOf('rwa') >= 0) return 'real-world backing depends on the issuer staying solvent and honest';
     if (c.indexOf('insurance') >= 0) return 'cover pays only for the events the policy names, and claims can be disputed';
     if (c.indexOf('basis') >= 0) return 'the funding rate can turn negative and the strategy pays instead of earning';
+    if (c.indexOf('btc') >= 0) return 'a BTC-backed asset depends on its custodian or bridge staying solvent';
+    if (c.indexOf('payments') >= 0) return 'a payment channel locks funds until it closes';
+    if (c.indexOf('governance') >= 0) return 'incentives dry up when the bribes stop';
+    if (c.indexOf('card') >= 0) return 'a card issuer can freeze funds or change its fees';
+    if (c === 'chain') return "a new chain's apps and bridges carry smart-contract risk";
     return 'an airdrop is never guaranteed, and the position can lose value while you wait';
   }
   function holdFor(p, hold) {
     var c = (p.category || '').toLowerCase();
     if (c.indexOf('lend') >= 0 || c.indexOf('cdp') >= 0 || c.indexOf('collateral') >= 0) return 'Keep the supplied assets in place for at least ' + hold + ' days so the supply accrues across more than one snapshot.';
+    if (c.indexOf('indexes') >= 0) return 'Hold the index for at least ' + hold + ' days so the position is counted in more than one snapshot.';
     if (c.indexOf('dex') >= 0) return 'Keep the liquidity in range for at least ' + hold + ' days so the position earns fees across more than one snapshot.';
-    if (c.indexOf('yield') >= 0 || c.indexOf('curator') >= 0 || c.indexOf('allocator') >= 0 || c.indexOf('onchain capital') >= 0) return 'Keep the vault shares for at least ' + hold + ' days so the position is counted in more than one snapshot.';
+    if (c.indexOf('yield') >= 0 || c.indexOf('curator') >= 0 || c.indexOf('allocator') >= 0 || c.indexOf('onchain capital') >= 0 || c === 'farm') return 'Keep the vault shares for at least ' + hold + ' days so the position is counted in more than one snapshot.';
+    if (c.indexOf('liquidity manager') >= 0) return 'Keep the managed position for at least ' + hold + ' days so it earns fees across more than one snapshot.';
     if (c.indexOf('bridge') >= 0) return 'Keep the bridged funds working inside the app for at least ' + hold + ' days so the activity is counted in more than one snapshot.';
     if (c.indexOf('liquid staking') >= 0 || c.indexOf('restak') >= 0 || c.indexOf('staking') >= 0) return 'Keep the stake locked for at least ' + hold + ' days so the position is counted in more than one snapshot.';
     if (c.indexOf('perpetual') >= 0 || c.indexOf('derivative') >= 0) return 'Keep the margin deposited for at least ' + hold + ' days so the account shows activity in more than one snapshot.';
+    if (c.indexOf('btc') >= 0) return 'Hold the BTC-backed asset for at least ' + hold + ' days so the position is counted in more than one snapshot.';
+    if (c.indexOf('payments') >= 0) return 'Keep the channel open for at least ' + hold + ' days so the activity is counted in more than one snapshot.';
+    if (c === 'chain') return 'Keep the funds on ' + p.name + ' for at least ' + hold + ' days so the activity is counted in more than one snapshot.';
     return 'Keep the position open for at least ' + hold + ' days so the activity is counted in more than one snapshot.';
   }
   function weeklyFor(p) {
     var c = (p.category || '').toLowerCase();
     var name = p.name;
     if (c.indexOf('lend') >= 0 || c.indexOf('cdp') >= 0 || c.indexOf('collateral') >= 0) return 'Once a week, adjust the supplied amount a little, or claim the interest the position earned.';
+    if (c.indexOf('indexes') >= 0) return "Once a week, check the index's holdings and top up a small amount.";
     if (c.indexOf('dex') >= 0) return 'Once a week, swap a small amount through the pool, or rebalance the range if the price moved.';
-    if (c.indexOf('yield') >= 0 || c.indexOf('curator') >= 0 || c.indexOf('allocator') >= 0 || c.indexOf('onchain capital') >= 0) return "Once a week, check the vault's yield and top the position up with a small amount.";
+    if (c.indexOf('yield') >= 0 || c.indexOf('curator') >= 0 || c.indexOf('allocator') >= 0 || c.indexOf('onchain capital') >= 0 || c === 'farm') return "Once a week, check the vault's yield and top the position up with a small amount.";
+    if (c.indexOf('liquidity manager') >= 0) return "Once a week, check the managed pool's performance and top up a small amount.";
     if (c.indexOf('bridge') >= 0) return 'Once a week, bridge a small amount back through ' + name + ', or use the funds inside its app.';
     if (c.indexOf('liquid staking') >= 0 || c.indexOf('restak') >= 0 || c.indexOf('staking') >= 0) return 'Once a week, restake the rewards the stake pays instead of letting them sit idle.';
     if (c.indexOf('perpetual') >= 0 || c.indexOf('derivative') >= 0) return 'Once a week, check the funding rate and adjust the hedge if it moved.';
     if (c.indexOf('prediction') >= 0) return 'Once a week, review the open markets and settle any that closed.';
     if (c.indexOf('rwa') >= 0) return 'Once a week, check the yield the asset paid and claim it while the position is open.';
+    if (c.indexOf('btc') >= 0) return 'Once a week, check the backing behind the BTC-backed asset.';
+    if (c.indexOf('payments') >= 0) return 'Once a week, send one small payment through ' + name + '.';
+    if (c === 'chain') return 'Once a week, use one app on ' + name + '.';
     return 'Once a week, make one small qualifying action on the protocol, such as a deposit, a swap, a vote or a claim.';
   }
   function claimFor(p) {
@@ -242,7 +274,7 @@
     return el('section', { class: 'lede' },
       el('div', null,
         el('h1', null, 'Every pre-token protocol, priced off ', el('em', { text: 'live comparables' })),
-        el('p', { text: 'The watchlist is the floor: every protocol with at least $' + Math.round(DATA.floor_usd / 1e6) + 'M of TVL and no token on record. The early radar adds ' + DATA.early_size + ' pre-token protocols below that floor. Each row is priced at its own category\u2019s median market-cap-to-TVL ratio, taken from the live-token protocols in the same snapshot. Implied value is a model, not a promise.' })
+        el('p', { text: 'The watchlist is the floor: every protocol with at least $' + Math.round(DATA.floor_usd / 1e6) + 'M of TVL and no token on record. The early radar adds ' + DATA.early_size + ' pre-token protocols below that floor. Each row is priced off the live market\u2019s own comparables \u2014 its category\u2019s median market-cap-to-TVL ratio, or its sector family\u2019s when the category is too thin \u2014 taken from the live-token protocols in the same snapshot. Implied value is a model, not a promise.' })
       ),
       el('div', { class: 'facts' },
         el('div', { class: 'fact' }, el('span', { text: 'Watchlist covered' }), el('b', { text: DATA.watchlist_size + ' / ' + DATA.watchlist_size })),
@@ -382,7 +414,7 @@
       el('div', { class: 'formula' },
         'implied = round( tvl_usd x category_multiple x (1 + clamp(change_7d, ' + m.growth_floor + ', ' + m.growth_cap + ') / 100 x ' + m.growth_weight + ') x (' + m.maturity_floor + ' + min(age_days, ' + m.maturity_days + ') / ' + m.maturity_days + ' x ' + m.maturity_range + ') )'
       ),
-      el('p', { class: 'sub', text: 'The category multiple is the median market-cap-to-TVL ratio of the live-token protocols in the same category, priced from this snapshot. A category with fewer than ' + m.min_category_n + ' live protocols prices off its sector family\u2019s median instead \u2014 vaults with vaults, bridges with bridges \u2014 and only a category with no family uses the overall median of ' + DATA.overall_median_multiple.toFixed(4) + '\u00d7, priced off ' + DATA.live_comparables_n + ' live protocols. Multiples are clamped to ' + m.multiple_floor + '\u2013' + m.multiple_cap + '\u00d7. Age is the time since the protocol was first listed, the best record of how long it has run with no token; an unlisted age uses ' + m.unknown_age_days + ' days. Every row says which level priced it, in its detail view.' }),
+      el('p', { class: 'sub', text: 'The category multiple is the median market-cap-to-TVL ratio of the live-token protocols in the same category, priced from this snapshot. A category with fewer than ' + m.min_category_n + ' live protocols prices off its sector family\u2019s median instead \u2014 vaults with vaults, bridges with bridges \u2014 and only a category with no family uses the overall median of ' + DATA.overall_median_multiple.toFixed(4) + '\u00d7, priced off ' + DATA.live_comparables_n + ' live protocols. Centralised exchanges are left out of every median: an exchange\u2019s ratio is not a comparable for a decentralised protocol. Multiples are clamped to ' + m.multiple_floor + '\u2013' + m.multiple_cap + '\u00d7. Age is the time since the protocol was first listed, the best record of how long it has run with no token; an unlisted age uses ' + m.unknown_age_days + ' days. Every row says which level priced it, in its detail view.' }),
       el('table', { class: 'comps' },
         el('caption', { class: 'sub', text: 'Comparables: median market-cap-to-TVL by category, from the live protocols in this snapshot.' }),
         el('thead', null, el('tr', null, el('th', { scope: 'col', text: 'Category' }), el('th', { scope: 'col', class: 'num', text: 'Median multiple' }), el('th', { scope: 'col', class: 'num', text: 'Live protocols' }))),
@@ -392,8 +424,9 @@
         el('caption', { class: 'sub', text: 'Family medians: the same ratio pooled by sector family, for the categories too thin to price on their own.' }),
         el('thead', null, el('tr', null, el('th', { scope: 'col', text: 'Family' }), el('th', { scope: 'col', class: 'num', text: 'Median multiple' }), el('th', { scope: 'col', class: 'num', text: 'Live protocols' }))),
         el('tbody', null, DATA.families.map(function (c) {
+          var members = (DATA.family_members[c.category] || []).join(', ');
           return el('tr', null,
-            el('td', { text: c.category }),
+            el('td', null, el('span', { text: c.category }), members ? el('span', { class: 'members', text: members }) : null),
             el('td', { class: 'num', text: c.median_multiple.toFixed(4) + '\u00d7' }),
             el('td', { class: 'num', text: String(c.n) })
           );

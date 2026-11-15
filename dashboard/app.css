@@ -93,6 +93,7 @@ td.num, th.num { text-align: right; }
 .comps { width: 100%; font-size: 13.5px; margin-bottom: 14px; }
 .comps td, .comps th { padding: 6px 10px; }
 .comps td.num { text-align: right; }
+.members { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
 .sandbox { border-top: 1px solid var(--line); padding-top: 14px; }
 .sandbox h3 { margin: 0 0 4px; font-size: 15px; }
 .sandbox p { font-size: 13px; }
