@@ -18,8 +18,11 @@ concrete steps with a cost and a time, starting with the category's risk.
 Implied value = TVL × category multiple × growth multiplier × maturity multiplier.
 
 - **Category multiple**: the median market-cap-to-TVL ratio of the live-token protocols in the
-  same category (at least 3 comparables, else the overall median of 0.246×). Centralised
-  exchanges are left out: an exchange's ratio is not a comparable for a decentralised protocol.
+  same category (at least 3 comparables). A thinner category prices off its sector family's
+  median instead — vaults with vaults, bridges with bridges — and only a category with no
+  family uses the overall median (0.2460×, from 119 live protocols). Centralised exchanges are
+  left out: an exchange's ratio is not a comparable for a decentralised protocol. Every row
+  records which level priced it.
 - **Growth multiplier**: the protocol's 7-day TVL change, clamped to −60%…+120%, at half weight.
 - **Maturity multiplier**: 0.6 + up to 0.4 for time listed without a token, over three years.
 

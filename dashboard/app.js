@@ -137,6 +137,36 @@
     if (c.indexOf('basis') >= 0) return 'the funding rate can turn negative and the strategy pays instead of earning';
     return 'an airdrop is never guaranteed, and the position can lose value while you wait';
   }
+  function holdFor(p, hold) {
+    var c = (p.category || '').toLowerCase();
+    if (c.indexOf('lend') >= 0 || c.indexOf('cdp') >= 0 || c.indexOf('collateral') >= 0) return 'Keep the supplied assets in place for at least ' + hold + ' days so the supply accrues across more than one snapshot.';
+    if (c.indexOf('dex') >= 0) return 'Keep the liquidity in range for at least ' + hold + ' days so the position earns fees across more than one snapshot.';
+    if (c.indexOf('yield') >= 0 || c.indexOf('curator') >= 0 || c.indexOf('allocator') >= 0 || c.indexOf('onchain capital') >= 0) return 'Keep the vault shares for at least ' + hold + ' days so the position is counted in more than one snapshot.';
+    if (c.indexOf('bridge') >= 0) return 'Keep the bridged funds working inside the app for at least ' + hold + ' days so the activity is counted in more than one snapshot.';
+    if (c.indexOf('liquid staking') >= 0 || c.indexOf('restak') >= 0 || c.indexOf('staking') >= 0) return 'Keep the stake locked for at least ' + hold + ' days so the position is counted in more than one snapshot.';
+    if (c.indexOf('perpetual') >= 0 || c.indexOf('derivative') >= 0) return 'Keep the margin deposited for at least ' + hold + ' days so the account shows activity in more than one snapshot.';
+    return 'Keep the position open for at least ' + hold + ' days so the activity is counted in more than one snapshot.';
+  }
+  function weeklyFor(p) {
+    var c = (p.category || '').toLowerCase();
+    var name = p.name;
+    if (c.indexOf('lend') >= 0 || c.indexOf('cdp') >= 0 || c.indexOf('collateral') >= 0) return 'Once a week, adjust the supplied amount a little, or claim the interest the position earned.';
+    if (c.indexOf('dex') >= 0) return 'Once a week, swap a small amount through the pool, or rebalance the range if the price moved.';
+    if (c.indexOf('yield') >= 0 || c.indexOf('curator') >= 0 || c.indexOf('allocator') >= 0 || c.indexOf('onchain capital') >= 0) return "Once a week, check the vault's yield and top the position up with a small amount.";
+    if (c.indexOf('bridge') >= 0) return 'Once a week, bridge a small amount back through ' + name + ', or use the funds inside its app.';
+    if (c.indexOf('liquid staking') >= 0 || c.indexOf('restak') >= 0 || c.indexOf('staking') >= 0) return 'Once a week, restake the rewards the stake pays instead of letting them sit idle.';
+    if (c.indexOf('perpetual') >= 0 || c.indexOf('derivative') >= 0) return 'Once a week, check the funding rate and adjust the hedge if it moved.';
+    if (c.indexOf('prediction') >= 0) return 'Once a week, review the open markets and settle any that closed.';
+    if (c.indexOf('rwa') >= 0) return 'Once a week, check the yield the asset paid and claim it while the position is open.';
+    return 'Once a week, make one small qualifying action on the protocol, such as a deposit, a swap, a vote or a claim.';
+  }
+  function claimFor(p) {
+    var c = (p.category || '').toLowerCase();
+    if (c.indexOf('liquid staking') >= 0 || c.indexOf('restak') >= 0 || c.indexOf('staking') >= 0) return "Before you withdraw, check the exit queue on the protocol's own page, unstake only from the link it publishes, then log the wallet, dates and transactions.";
+    if (c.indexOf('lend') >= 0 || c.indexOf('cdp') >= 0 || c.indexOf('collateral') >= 0) return "Before you withdraw, repay any borrow first, then claim only from the protocol's own page and log the wallet, dates and transactions.";
+    if (c.indexOf('bridge') >= 0) return "Before you withdraw, bridge the funds back through the protocol's own route, claim only from the link it publishes, then log the wallet, dates and transactions.";
+    return "Before you withdraw, open the protocol's own points or rewards page and claim only from the link it publishes, then log the wallet, dates and transactions.";
+  }
   function farmSteps(p) {
     var chain = chainOf(p);
     var capital = capitalFor(p);
@@ -144,12 +174,12 @@
     var gas = capital >= 150 ? 8 : 4;
     return [
       { text: 'Know the risk before you commit: ' + riskFor(p) + '. Never farm with money you need back this month.', cost: 'no cost', time: '5 minutes' },
-      { text: 'Start with a fresh wallet that holds only the funds you plan to farm, and store its seed phrase offline.', cost: 'under $3 of gas for the first transaction', time: '5 minutes' },
+      { text: 'Start with a fresh wallet' + (p.chains && p.chains.length > 0 ? ' on ' + chain : '') + ' that holds only the funds you plan to farm, and store its seed phrase offline.', cost: 'under $3 of gas for the first transaction', time: '5 minutes' },
       { text: actionFor(p, capital, chain), cost: '$' + capital + ' of capital and about $' + gas + ' of gas', time: '15 minutes to set up' },
       { text: secondActionFor(p, capital, chain), cost: 'about $' + Math.max(2, Math.round(gas / 2)) + ' of gas', time: '10 minutes' },
-      { text: 'Keep the position open for at least ' + hold + ' days so the activity is counted in more than one snapshot.', cost: 'the $' + capital + ' stays in the position', time: hold + ' days' },
-      { text: 'Once a week, make one small qualifying action on the protocol, such as a deposit, a swap, a vote or a claim.', cost: 'about $2 of gas a week', time: '10 minutes a week' },
-      { text: "Before you withdraw, open the protocol's own points or rewards page and claim only from the link it publishes, then log the wallet, dates and transactions.", cost: 'no fee to check, and never pay to claim', time: '15 minutes' }
+      { text: holdFor(p, hold), cost: 'the $' + capital + ' stays in the position', time: hold + ' days' },
+      { text: weeklyFor(p), cost: 'about $2 of gas a week', time: '10 minutes a week' },
+      { text: claimFor(p), cost: 'no fee to check, and never pay to claim', time: '15 minutes' }
     ].map(stepText);
   }
 
@@ -352,11 +382,22 @@
       el('div', { class: 'formula' },
         'implied = round( tvl_usd x category_multiple x (1 + clamp(change_7d, ' + m.growth_floor + ', ' + m.growth_cap + ') / 100 x ' + m.growth_weight + ') x (' + m.maturity_floor + ' + min(age_days, ' + m.maturity_days + ') / ' + m.maturity_days + ' x ' + m.maturity_range + ') )'
       ),
-      el('p', { class: 'sub', text: 'The category multiple is the median market-cap-to-TVL ratio of the live-token protocols in the same category, priced from this snapshot. A category with fewer than ' + m.min_category_n + ' live protocols uses the overall median of ' + DATA.overall_median_multiple.toFixed(4) + '\u00d7. Multiples are clamped to ' + m.multiple_floor + '\u2013' + m.multiple_cap + '\u00d7. Age is the time since the protocol was first listed, the best record of how long it has run with no token; an unlisted age uses ' + m.unknown_age_days + ' days.' }),
+      el('p', { class: 'sub', text: 'The category multiple is the median market-cap-to-TVL ratio of the live-token protocols in the same category, priced from this snapshot. A category with fewer than ' + m.min_category_n + ' live protocols prices off its sector family\u2019s median instead \u2014 vaults with vaults, bridges with bridges \u2014 and only a category with no family uses the overall median of ' + DATA.overall_median_multiple.toFixed(4) + '\u00d7, priced off ' + DATA.live_comparables_n + ' live protocols. Multiples are clamped to ' + m.multiple_floor + '\u2013' + m.multiple_cap + '\u00d7. Age is the time since the protocol was first listed, the best record of how long it has run with no token; an unlisted age uses ' + m.unknown_age_days + ' days. Every row says which level priced it, in its detail view.' }),
       el('table', { class: 'comps' },
         el('caption', { class: 'sub', text: 'Comparables: median market-cap-to-TVL by category, from the live protocols in this snapshot.' }),
         el('thead', null, el('tr', null, el('th', { scope: 'col', text: 'Category' }), el('th', { scope: 'col', class: 'num', text: 'Median multiple' }), el('th', { scope: 'col', class: 'num', text: 'Live protocols' }))),
         el('tbody', null, compRows)
+      ),
+      el('table', { class: 'comps' },
+        el('caption', { class: 'sub', text: 'Family medians: the same ratio pooled by sector family, for the categories too thin to price on their own.' }),
+        el('thead', null, el('tr', null, el('th', { scope: 'col', text: 'Family' }), el('th', { scope: 'col', class: 'num', text: 'Median multiple' }), el('th', { scope: 'col', class: 'num', text: 'Live protocols' }))),
+        el('tbody', null, DATA.families.map(function (c) {
+          return el('tr', null,
+            el('td', { text: c.category }),
+            el('td', { class: 'num', text: c.median_multiple.toFixed(4) + '\u00d7' }),
+            el('td', { class: 'num', text: String(c.n) })
+          );
+        }))
       ),
       el('div', { class: 'sandbox' },
         el('h3', { text: 'Model sandbox' }),
@@ -373,6 +414,19 @@
 
   var dialog = el('dialog', { class: 'detail', id: 'detail', 'aria-labelledby': 'detail-title' });
   dialog.addEventListener('close', function () { state.selected = null; writeHash(); });
+
+  // Which level priced this row's multiple, and how many live protocols priced it.
+  function basisNote(row) {
+    if (row.multiple_source === 'category') {
+      var c = DATA.comparables.filter(function (x) { return x.category === row.multiple_basis; })[0];
+      return row.multiple_basis + ' category median (' + (c ? c.n : '?') + ' live)';
+    }
+    if (row.multiple_source === 'family') {
+      var f = DATA.families.filter(function (x) { return x.category === row.multiple_basis; })[0];
+      return row.multiple_basis + ' family median (' + (f ? f.n : '?') + ' live)';
+    }
+    return 'Overall median (' + DATA.live_comparables_n + ' live)';
+  }
 
   function openDetail(slug) {
     var row = DATA.rows.filter(function (r) { return r.slug === slug; })[0];
@@ -406,6 +460,7 @@
       el('div', { class: 'equation' },
         el('div', null, el('span', { text: 'TVL' }), el('b', { class: 'num', text: fmtUsd(row.tvl_usd) })),
         el('div', null, el('span', { text: 'Category multiple' }), el('b', { class: 'num', text: row.category_multiple.toFixed(4) + '\u00d7' })),
+        el('div', null, el('span', { text: 'Priced off' }), el('b', { text: basisNote(row) })),
         el('div', null, el('span', { text: 'Seven-day growth' }), el('b', { class: 'num', text: fmtPct(row.change_7d) })),
         el('div', null, el('span', { text: 'Age with no token' }), el('b', { class: 'num', text: fmtAge(row.age_days) })),
         el('div', null, el('span', { text: 'Growth multiplier' }), el('b', { class: 'num', text: String(row.growth_multiplier) })),

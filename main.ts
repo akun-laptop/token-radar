@@ -91,7 +91,10 @@ function runSummary(): string {
   const top = board[0]?.implied_value_usd ?? 0;
   const bottom = board[board.length - 1]?.implied_value_usd ?? 0;
   const steps = board.reduce((n, r) => n + r.farm_steps.length, 0);
-  return `token radar: watchlist ${covered}/${snapshot.watchlist.length} covered, implied value $${top.toLocaleString('en-US')} down to $${bottom.toLocaleString('en-US')}, ${steps} farm steps written\n`;
+  const bySource = { category: 0, family: 0, overall: 0 };
+  for (const r of board) bySource[r.model.multiple_source] += 1;
+  return `token radar: watchlist ${covered}/${snapshot.watchlist.length} covered, implied value $${top.toLocaleString('en-US')} down to $${bottom.toLocaleString('en-US')}, ${steps} farm steps written\n` +
+    `token radar: multiples priced off category ${bySource.category}, family ${bySource.family}, overall ${bySource.overall}\n`;
 }
 
 process.stdout.write(
