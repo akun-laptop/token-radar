@@ -85,7 +85,17 @@ for (const name of shots) {
 // The dossier is written last: the scorer rebuilds it from this /output and compares bytes.
 writeFileSync(join(out, 'dossier.json'), buildDossier(out, { text_max_bytes: TEXT_MAX_BYTES, screenshots: SCREENSHOT_CAPS, dashboard: { max_files: 400, max_bytes: 4_194_304 } }));
 
+/** The run's summary, for the operator: coverage and the value range, not just the file list. */
+function runSummary(): string {
+  const covered = board.filter((r) => snapshot.watchlist.includes(r.slug)).length;
+  const top = board[0]?.implied_value_usd ?? 0;
+  const bottom = board[board.length - 1]?.implied_value_usd ?? 0;
+  const steps = board.reduce((n, r) => n + r.farm_steps.length, 0);
+  return `token radar: watchlist ${covered}/${snapshot.watchlist.length} covered, implied value $${top.toLocaleString('en-US')} down to $${bottom.toLocaleString('en-US')}, ${steps} farm steps written\n`;
+}
+
 process.stdout.write(
   `token radar: ${snapshot.protocols.length} protocols, ${snapshot.watchlist.length} on the watchlist, ${board.length} rows scored (${radar.early_size} early, ${radar.live_size} live set aside)\n` +
-    `token radar: wrote ${join(out, 'board.json')}, ${join(out, 'data.js')}, ${join(out, 'dashboard')} (${dash.length} files), ${join(out, 'screenshots')} (${shots.length} images) and ${join(out, 'dossier.json')}\n`,
+    `token radar: wrote ${join(out, 'board.json')}, ${join(out, 'data.js')}, ${join(out, 'dashboard')} (${dash.length} files), ${join(out, 'screenshots')} (${shots.length} images) and ${join(out, 'dossier.json')}\n` +
+    runSummary(),
 );

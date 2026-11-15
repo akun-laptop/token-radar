@@ -118,12 +118,32 @@
     if (s.length < 20) s = s + " Hold the position and check the protocol's own page.";
     return s;
   }
+  // What can go wrong with this category, in one line: the plan names the risk before the money
+  // moves. This is the same derivation as lib/model.ts, so the page's plan matches board.json.
+  function riskFor(p) {
+    var c = (p.category || '').toLowerCase();
+    if (c.indexOf('lend') >= 0 || c.indexOf('cdp') >= 0 || c.indexOf('collateral') >= 0) return 'a supplied asset can be liquidated if the collateral behind it falls';
+    if (c.indexOf('dex') >= 0) return 'a liquidity position loses value when the two sides move apart';
+    if (c.indexOf('yield') >= 0) return 'yields compress as more capital chases the same strategy';
+    if (c.indexOf('leveraged farm') >= 0) return 'leverage multiplies losses as fast as gains, and the position can be liquidated';
+    if (c.indexOf('bridge') >= 0) return 'bridged funds depend on the bridge staying solvent and unhacked';
+    if (c.indexOf('liquid staking') >= 0 || c.indexOf('restak') >= 0 || c.indexOf('staking') >= 0) return 'the staking receipt can trade below the staked asset while exits queue';
+    if (c.indexOf('perpetual') >= 0 || c.indexOf('derivative') >= 0) return 'a leveraged position can be liquidated by one sharp move';
+    if (c.indexOf('prediction') >= 0) return 'a prediction market pays nothing if the outcome goes the other way';
+    if (c.indexOf('curator') >= 0 || c.indexOf('allocator') >= 0 || c.indexOf('onchain capital') >= 0) return 'a vault is only as good as its curator, and its strategy can underperform';
+    if (c.indexOf('stable') >= 0) return 'a stable asset can lose its peg if its backing is questioned';
+    if (c.indexOf('rwa') >= 0) return 'real-world backing depends on the issuer staying solvent and honest';
+    if (c.indexOf('insurance') >= 0) return 'cover pays only for the events the policy names, and claims can be disputed';
+    if (c.indexOf('basis') >= 0) return 'the funding rate can turn negative and the strategy pays instead of earning';
+    return 'an airdrop is never guaranteed, and the position can lose value while you wait';
+  }
   function farmSteps(p) {
     var chain = chainOf(p);
     var capital = capitalFor(p);
     var hold = holdDaysFor(p.age_days);
     var gas = capital >= 150 ? 8 : 4;
     return [
+      { text: 'Know the risk before you commit: ' + riskFor(p) + '. Never farm with money you need back this month.', cost: 'no cost', time: '5 minutes' },
       { text: 'Start with a fresh wallet that holds only the funds you plan to farm, and store its seed phrase offline.', cost: 'under $3 of gas for the first transaction', time: '5 minutes' },
       { text: actionFor(p, capital, chain), cost: '$' + capital + ' of capital and about $' + gas + ' of gas', time: '15 minutes to set up' },
       { text: secondActionFor(p, capital, chain), cost: 'about $' + Math.max(2, Math.round(gas / 2)) + ' of gas', time: '10 minutes' },
@@ -368,7 +388,18 @@
         el('h2', { id: 'detail-title', text: row.name }),
         el('p', { class: 'sub', text: (row.category || 'Other') + ' on ' + (row.chains && row.chains.length ? row.chains.join(', ') : 'an unnamed chain') })
       ),
-      el('button', { class: 'close', type: 'button', 'aria-label': 'Close details', text: 'Close', onclick: function () { dialog.close(); } })
+      el('div', { class: 'detail-actions' },
+        el('button', { class: 'copy', type: 'button', 'aria-label': 'Copy a link to this row', text: 'Copy link', onclick: function (ev) {
+          var link = window.location.href.split('#')[0] + '#p=' + row.slug;
+          var done = function () { ev.target.textContent = 'Copied'; window.setTimeout(function () { ev.target.textContent = 'Copy link'; }, 1500); };
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(link).then(done, function () { window.prompt('Copy this link', link); });
+          } else {
+            window.prompt('Copy this link', link);
+          }
+        } }),
+        el('button', { class: 'close', type: 'button', 'aria-label': 'Close details', text: 'Close', onclick: function () { dialog.close(); } })
+      )
     ));
     dialog.appendChild(el('section', { class: 'detail-section' },
       el('h3', { text: 'Implied value' }),

@@ -108,6 +108,9 @@ td.num, th.num { text-align: right; }
 .detail-head h2 { margin: 4px 0 2px; font-size: 23px; }
 .detail-head p { margin: 0; }
 .close { background: var(--panel-2); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 7px 12px; font: inherit; cursor: pointer; height: fit-content; }
+.detail-actions { display: flex; gap: 8px; height: fit-content; }
+.copy { background: transparent; color: var(--gold); border: 1px solid var(--gold-dim); border-radius: 8px; padding: 7px 12px; font: inherit; cursor: pointer; height: fit-content; white-space: nowrap; }
+.copy:hover { background: rgba(232, 184, 96, 0.08); }
 .detail-section { padding: 16px 22px 20px; border-top: 1px solid var(--line); margin-top: 16px; }
 .detail-section h3 { margin: 0 0 12px; font-size: 16px; }
 .equation { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }

@@ -400,9 +400,29 @@ function secondActionFor(p: SnapshotProtocol, capital: number, chain: string): s
   return `Return to ${name} once a week and repeat the deposit with $${Math.max(10, Math.round(capital / 5))} more.`;
 }
 
+/** What can go wrong with this category, in one line: the plan names the risk before the money moves. */
+function riskFor(p: SnapshotProtocol): string {
+  const c = (p.category ?? '').toLowerCase();
+  if (c.includes('lend') || c.includes('cdp') || c.includes('collateral')) return 'a supplied asset can be liquidated if the collateral behind it falls';
+  if (c.includes('dex')) return 'a liquidity position loses value when the two sides move apart';
+  if (c.includes('yield')) return 'yields compress as more capital chases the same strategy';
+  if (c.includes('leveraged farm')) return 'leverage multiplies losses as fast as gains, and the position can be liquidated';
+  if (c.includes('bridge')) return 'bridged funds depend on the bridge staying solvent and unhacked';
+  if (c.includes('liquid staking') || c.includes('restak') || c.includes('staking')) return 'the staking receipt can trade below the staked asset while exits queue';
+  if (c.includes('perpetual') || c.includes('derivative')) return 'a leveraged position can be liquidated by one sharp move';
+  if (c.includes('prediction')) return 'a prediction market pays nothing if the outcome goes the other way';
+  if (c.includes('curator') || c.includes('allocator') || c.includes('onchain capital')) return 'a vault is only as good as its curator, and its strategy can underperform';
+  if (c.includes('stable')) return 'a stable asset can lose its peg if its backing is questioned';
+  if (c.includes('rwa')) return 'real-world backing depends on the issuer staying solvent and honest';
+  if (c.includes('insurance')) return 'cover pays only for the events the policy names, and claims can be disputed';
+  if (c.includes('basis')) return 'the funding rate can turn negative and the strategy pays instead of earning';
+  return 'an airdrop is never guaranteed, and the position can lose value while you wait';
+}
+
 /**
- * A protocol's farm plan: six steps, each an action with a cost and a time. The plan is derived from
+ * A protocol's farm plan: seven steps, each an action with a cost and a time. The plan is derived from
  * the protocol's own record (category, chains, TVL, age), never from a hand-written list of names.
+ * The first step names the category's risk, so the plan never reads as a promise.
  */
 export function farmSteps(p: SnapshotProtocol, age: number | null): FarmStep[] {
   const chain = chainOf(p);
@@ -410,6 +430,11 @@ export function farmSteps(p: SnapshotProtocol, age: number | null): FarmStep[] {
   const hold = holdDaysFor(age);
   const gas = capital >= 150 ? 8 : 4;
   return [
+    {
+      text: `Know the risk before you commit: ${riskFor(p)}. Never farm with money you need back this month.`,
+      cost: 'no cost',
+      time: '5 minutes',
+    },
     {
       text: `Start with a fresh wallet that holds only the funds you plan to farm, and store its seed phrase offline.`,
       cost: 'under $3 of gas for the first transaction',
